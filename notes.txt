@@ -1,0 +1,24 @@
+2020-04-21
+----------
+
+- got ipython notebook to go into sphinx
+- figured out how to squash commits in git
+    - https://www.internalpointers.com/post/squash-commits-into-one-git
+- Maybe worth having origin in bitbucket - so all the experiments don't get exposed
+
+- put in bitbucket - so it is safe
+    - clean up enough so that a releas is possible
+    - put this pack in index.rst
+        -    tutorial_docs/index
+- move to github-pyenergyplus
+- fork to santoshphilip
+- release to pypi
+- release to readthedocs    
+
+
+2020-04-19
+----------
+
+python3 -m venv ~/venvs/zeppy
+python3.7 -m venv ~/venvs/zeppy
+source ~/venvs/zeppy/bin/activate
