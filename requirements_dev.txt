@@ -14,3 +14,7 @@ pytest-runner==5.1
 # ---
 jupyter
 nbsphinx
+
+# ---
+eppy
+witheppy

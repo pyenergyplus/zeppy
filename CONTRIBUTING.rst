@@ -120,7 +120,7 @@ Additional notes
 This needs to be synchronized with the previous text
 
 Collective Code Construction Contract
-`````````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 https://rfc.zeromq.org/spec:42/C4/
 
