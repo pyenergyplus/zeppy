@@ -8,6 +8,7 @@ Welcome to zeppy's documentation!
    readme
    installation
    usage
+   tutorial_docs/index
    modules
    contributing
    authors

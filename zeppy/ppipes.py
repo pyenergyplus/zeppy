@@ -120,6 +120,7 @@ def _zmq_worker(func, wnum=None, verbose=False):
             result = func(*args, **kwargs) 
             # Send results to sink with index number i
             sender.send_pyobj((i, result))
+            _v_print(f'sent result of item: {i}, in worker: {wnum} to sink', verbose=verbose)
             
         if endsubscriber in socks:
             message = endsubscriber.recv()
@@ -185,12 +186,12 @@ def _fan_out_in(func, args_list, nworkers=None, verbose=False):
     # Starts sink
     p = multiprocessing.Process(target=_zmq_sink,  kwargs={'verbose':verbose})
     p.start()
-    _v_print('started sink', verbose=verbose)
+    _v_print('starting sink', verbose=verbose)
 
     # starts the vent
     p = multiprocessing.Process(target=_zmq_vent, args = (args_list, ),  kwargs={'verbose':verbose})
     p.start()
-    _v_print('started vent', verbose=verbose)
+    _v_print('started ventilator', verbose=verbose)
 
 def ipc_parallelpipe(func, args_list, nworkers=None, verbose=False):
     """distributed run of the func using zmq
@@ -213,10 +214,25 @@ def waitsome(seconds):
     """wait for some seconds"""
     time.sleep(seconds)
     return seconds
-    
+
+def wait_add(first, second):
+    """wait for the sum of first and second. return the sum"""
+    seconds = first + second
+    return waitsome(seconds)    
+        
+def wait_add_mult(first, add=0, mult=1):
+    """calculate the result=(first+add)*mult. Then waitsome(result)"""
+    result=(first + add) * mult
+    return waitsome(result)    
+        
 if __name__ == '__main__':
     waitlist = [1, 2, 3, 2, 1]
-    func = waitsome
+    waitlist = [(1, ), (2, ), (3, ), (2, ), (1, )]
+    waitlist = [(1, 0), (1, 1), (2, 1), (2, 0), (0, 1)]
+    waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
+    waitlist = [(1, ), (2, ), (3, ), (2, ), (1, )]
+    print(waitlist) 
+    func = wait_add_mult
     result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True)    
     print(result)
     
