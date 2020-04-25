@@ -148,7 +148,7 @@ def _zmq_vent(args_list, verbose=False):
         sender.send_pyobj((i, task))
 
         # Give 0MQ time to deliver - otherwise all of it will go to one worker
-        time.sleep(0.1)
+        time.sleep(1)
 
 
 def _zmq_resultsub(verbose=False):
@@ -223,16 +223,68 @@ def wait_add(first, second):
 def wait_add_mult(first, add=0, mult=1):
     """calculate the result=(first+add)*mult. Then waitsome(result)"""
     result=(first + add) * mult
-    return waitsome(result)    
-        
-if __name__ == '__main__':
-    waitlist = [1, 2, 3, 2, 1]
-    waitlist = [(1, ), (2, ), (3, ), (2, ), (1, )]
-    waitlist = [(1, 0), (1, 1), (2, 1), (2, 0), (0, 1)]
-    waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
-    waitlist = [(1, ), (2, ), (3, ), (2, ), (1, )]
-    print(waitlist) 
-    func = wait_add_mult
-    result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True)    
-    print(result)
+    return waitsome(result) 
     
+def idfversion(idf):
+    versions = idf.idfobjects['version']
+    ver = versions[0]
+    return ver.Version_Identifier
+    
+def eplaunch_run(idf):
+    # import witheppy.runner
+    # witheppy.runner.eplaunch_run(idf)
+    # idf.run(output_directory='./eplus/', output_prefix='C')
+    import subprocess
+    import os.path
+    wfile = idf.epw
+    idfname = idf.idfname
+    justname = os.path.basename(idfname).split('.')[0]
+    dirname = os.path.dirname(idfname)
+    runstr = f'/Applications/EnergyPlus-9-1-0/energyplus -d {dirname} -p {justname} -s C  -w {wfile} {idfname}'
+    # runstr = f'/Applications/EnergyPlus-9-1-0/energyplus --help'
+    # runargs = ['/Applications/EnergyPlus-9-1-0/energyplus', '-d ./eplus_files/ -p Minimal -s C ./eplus_files/Minimal.idf']
+    print(runstr)
+    subprocess.check_call(runstr.split())
+    return None       
+
+
+@measure
+def runeverything():
+    # waitlist = [1, 2, 3, 2, 1]
+    # waitlist = [(1, ), (2, ), (3, ), (2, ), (1, )]
+    # waitlist = [(1, 0), (1, 1), (2, 1), (2, 0), (0, 1)]
+    # waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
+    # waitlist = [(1, ), (2, ), (3, ), (2, ), (1, )]
+    # print(waitlist)
+    # func = wait_add_mult
+    # result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True)
+    # print(result)
+
+    # running eppy in zeppy
+    import eppy
+    # fnames = ["./eplus_files/f1/Minimal.idf",
+    #         "./eplus_files/f2/UnitHeaterGasElec.idf",
+    #         "./eplus_files/f3/ZoneWSHP_wDOAS.idf"
+    #         ]
+    fnames = ["./eplus_files/f1/Minimal.idf",
+            "./eplus_files/f2/UnitHeaterGasElec.idf",
+            "./eplus_files/f3/ZoneWSHP_wDOAS.idf",
+            ]
+    wfile = "/Applications/EnergyPlus-9-1-0/WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"
+    idfs = [eppy.openidf(fname, epw=wfile) for fname in fnames]
+
+    # idf = idfs[0]
+    # print(idf.epw)
+
+    # import witheppy.runner
+    # witheppy.runner.eplaunch_run(idf)
+    # ver = idfversion(idf)
+    # print(ver)
+    waitlist = idfs
+    # print(waitlist)
+    func = eplaunch_run
+    result = ipc_parallelpipe(func, waitlist, nworkers=1, verbose=True)
+    print(result)
+            
+if __name__ == '__main__':
+    runeverything()

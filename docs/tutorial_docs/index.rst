@@ -8,4 +8,4 @@ Topics
 .. toctree::
     :maxdepth: 1
 
-    tutorial
+    simple_zeppy
