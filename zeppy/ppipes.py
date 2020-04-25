@@ -107,6 +107,7 @@ def _zmq_worker(func, wnum=None, verbose=False):
         if receiver in socks:
             i, task = receiver.recv_pyobj()
             _v_print(f'running item: {i}, in worker: {wnum}', verbose=verbose)
+            print(task)
             # get the args and kwargs
             try:
                 args = task['args']
@@ -128,7 +129,7 @@ def _zmq_worker(func, wnum=None, verbose=False):
         
 def _zmq_vent(args_list, verbose=False):
     """zmq vent for rweather"""
-
+    print(f'in  _zmq_vent: args_list={args_list}')
     context = zmq.Context()
 
     # Socket to send messages on
@@ -148,7 +149,7 @@ def _zmq_vent(args_list, verbose=False):
         sender.send_pyobj((i, task))
 
         # Give 0MQ time to deliver - otherwise all of it will go to one worker
-        time.sleep(1)
+        time.sleep(2)
 
 
 def _zmq_resultsub(verbose=False):
@@ -173,12 +174,14 @@ def _fan_out_in(func, args_list, nworkers=None, verbose=False):
     Uses the classic patallel-pipeline from zmq
         - vent -> workers -> sink
     The results are published in PUB-SUB pattern """
+    print(f' starting _fan_out_in: args_list={args_list}')
     
     # starts the workers
     if nworkers is None:
         nworkers = len(args_list)
     for i in range(nworkers):
     # for i in range(1):
+        
         p = multiprocessing.Process(target=_zmq_worker, args=(func, i, ), kwargs={'verbose':verbose})
         p.start()
         _v_print(f'started worker {i}', verbose=verbose)
@@ -189,7 +192,11 @@ def _fan_out_in(func, args_list, nworkers=None, verbose=False):
     _v_print('starting sink', verbose=verbose)
 
     # starts the vent
-    p = multiprocessing.Process(target=_zmq_vent, args = (args_list, ),  kwargs={'verbose':verbose})
+    print(f' starting vent args_list={args_list}')
+    # p = multiprocessing.Process(target=_zmq_vent,
+    #     args = (args_list, ),  kwargs={'verbose':verbose})
+    p = multiprocessing.Process(target=_zmq_vent, 
+        args = (args_list, ),  kwargs={'verbose':verbose})
     p.start()
     _v_print('started ventilator', verbose=verbose)
 
@@ -197,12 +204,16 @@ def ipc_parallelpipe(func, args_list, nworkers=None, verbose=False):
     """distributed run of the func using zmq
     Returns the results of all the run"""
     args_list = arglist_helper(args_list)
+    print(f'args_list={args_list}')
     _fan_out_in(func, args_list, nworkers=nworkers, verbose=verbose) 
         # -> parallel-pipline publishing the results
     message = _zmq_resultsub() # subscribes to the published results
     return message
     
 def arglist_helper(args_list):
+    print(f'args_list={args_list}')
+    if isinstance(args_list, dict):
+        return args_list
     if isinstance(args_list[0], (tuple, list)):
         return [{'args':(*item, )} for item in args_list]
     else:
@@ -222,6 +233,7 @@ def wait_add(first, second):
         
 def wait_add_mult(first, add=0, mult=1):
     """calculate the result=(first+add)*mult. Then waitsome(result)"""
+    print(f'first, add, mult = {first}, {add}, {mult}')
     result=(first + add) * mult
     return waitsome(result) 
     
@@ -245,46 +257,68 @@ def eplaunch_run(idf):
     # runargs = ['/Applications/EnergyPlus-9-1-0/energyplus', '-d ./eplus_files/ -p Minimal -s C ./eplus_files/Minimal.idf']
     print(runstr)
     subprocess.check_call(runstr.split())
-    return None       
+    return None 
+    
+def idf_run(idf):
+    import witheppy.runner
+    witheppy.runner.eplaunch_run(idf)
+    # idf.run(output_directory='./eplus/', output_prefix='C')
+
+
+    idfs = [[eppy.openidf(fname, epw=wfile), 
+            {
+                'ep_version':'9-1-0',     
+                'output_prefix':os.path.basename(fname).split()[0], 
+                'output_directory':os.path.dirname(fname),
+            }
+        ] 
+    for fname in fnames]
+    processors = 3
+    print(f'processors={processors}')
+    eppy.runner.run_functions.runIDFs(idfs, processors) 
 
 
 @measure
 def runeverything():
-    # waitlist = [1, 2, 3, 2, 1]
-    # waitlist = [(1, ), (2, ), (3, ), (2, ), (1, )]
-    # waitlist = [(1, 0), (1, 1), (2, 1), (2, 0), (0, 1)]
-    # waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
-    # waitlist = [(1, ), (2, ), (3, ), (2, ), (1, )]
-    # print(waitlist)
-    # func = wait_add_mult
-    # result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True)
+    waitlist = [1, 2, 3, 2, 1]
+    waitlist = [(1, ), (2, ), (3, ), (2, ), (1, )]
+    waitlist = [(1, 0), (1, 1), (2, 1), (2, 0), (0, 1)]
+    waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
+    waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
+    waitlist = [(1, 0, 1), ]
+    waitlist = [{'args':(1, ), 'kwargs':{'add':0, 'mult':1}}]
+    print(waitlist)
+    func = wait_add_mult
+    result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True)
+    print(result)
+
+    # # running eppy in zeppy
+    # import eppy
+    # # fnames = ["./eplus_files/f1/Minimal.idf",
+    # #         "./eplus_files/f2/UnitHeaterGasElec.idf",
+    # #         "./eplus_files/f3/ZoneWSHP_wDOAS.idf"
+    # #         ]
+    # fnames = [
+    #     # "./eplus_files/f1/Minimal.idf",
+    #         "./eplus_files/f2/UnitHeaterGasElec.idf",
+    #         "./eplus_files/f3/ZoneWSHP_wDOAS.idf",
+    #         "./eplus_files/f4/ZoneWSHP_wDOAS_1.idf",
+    #         ]
+    # wfile = "/Applications/EnergyPlus-9-1-0/WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"
+    # idfs = [eppy.openidf(fname, epw=wfile) for fname in fnames]
+    #
+    # # idf = idfs[0]
+    # # print(idf.epw)
+    #
+    # # import witheppy.runner
+    # # witheppy.runner.eplaunch_run(idf)
+    # # ver = idfversion(idf)
+    # # print(ver)
+    # waitlist = idfs
+    # # print(waitlist)
+    # func = idf_run
+    # result = ipc_parallelpipe(func, waitlist, nworkers=3, verbose=True)
     # print(result)
 
-    # running eppy in zeppy
-    import eppy
-    # fnames = ["./eplus_files/f1/Minimal.idf",
-    #         "./eplus_files/f2/UnitHeaterGasElec.idf",
-    #         "./eplus_files/f3/ZoneWSHP_wDOAS.idf"
-    #         ]
-    fnames = ["./eplus_files/f1/Minimal.idf",
-            "./eplus_files/f2/UnitHeaterGasElec.idf",
-            "./eplus_files/f3/ZoneWSHP_wDOAS.idf",
-            ]
-    wfile = "/Applications/EnergyPlus-9-1-0/WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"
-    idfs = [eppy.openidf(fname, epw=wfile) for fname in fnames]
-
-    # idf = idfs[0]
-    # print(idf.epw)
-
-    # import witheppy.runner
-    # witheppy.runner.eplaunch_run(idf)
-    # ver = idfversion(idf)
-    # print(ver)
-    waitlist = idfs
-    # print(waitlist)
-    func = eplaunch_run
-    result = ipc_parallelpipe(func, waitlist, nworkers=1, verbose=True)
-    print(result)
-            
 if __name__ == '__main__':
     runeverything()
