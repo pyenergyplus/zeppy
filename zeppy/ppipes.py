@@ -266,6 +266,19 @@ def idf_multirun(idf_kwargs):
     eppy.runner.run_functions.runIDFs( [(idf, options)] ) 
 
 
+def make_options(idf):
+    idfversion = idf.idfobjects['version'][0].Version_Identifier.split('.')
+    idfversion.extend([0] * (3 - len(idfversion)))
+    idfversionstr = '-'.join([str(item) for item in idfversion])
+    fname = idf.idfname
+    options = {
+        'ep_version':idfversionstr,
+        'output_prefix':os.path.basename(fname).split()[0],
+        'output_suffix':'C',
+        'output_directory':os.path.dirname(fname),
+        }
+    return options
+
 @measure
 def runeverything():
     waitlist = [1, 2, 3, 2, 1]
@@ -282,40 +295,15 @@ def runeverything():
 
     # running eppy in zeppy
     import eppy
-    # fnames = ["./eplus_files/f1/Minimal.idf",
-    #         "./eplus_files/f2/UnitHeaterGasElec.idf",
-    #         "./eplus_files/f3/ZoneWSHP_wDOAS.idf"
-    #         ]
     fnames = [
         # "./eplus_files/Minimal.idf",
             "./eplus_files/UnitHeaterGasElec.idf",
             "./eplus_files/ZoneWSHP_wDOAS.idf",
             "./eplus_files/ZoneWSHP_wDOAS_1.idf",
             ]
-    # fnames = [
-    #     # "./eplus_files/f1/Minimal.idf",
-    #         "./eplus_files/f2/UnitHeaterGasElec.idf",
-    #         "./eplus_files/f3/ZoneWSHP_wDOAS.idf",
-    #         "./eplus_files/f4/ZoneWSHP_wDOAS_1.idf",
-    #         ]
     wfile = "/Applications/EnergyPlus-9-1-0/WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"
     idfs = [eppy.openidf(fname, epw=wfile) for fname in fnames]
-
-    # idf = idfs[0]
-    # print(idf.epw)
-
-    # import witheppy.runner
-    # witheppy.runner.eplaunch_run(idf)
-    # ver = idfversion(idf)
-    # print(ver)
-    waitlist = [[{'args':idf, 'kwargs':{
-                    'ep_version':'9-1-0',     
-                    'output_prefix':os.path.basename(idf.idfname).split()[0], 
-                    'output_suffix':'C', 
-                    'output_directory':os.path.dirname(idf.idfname),
-                }
-            }] for idf in idfs]
-    # print(waitlist)
+    waitlist = [[{'args':idf, 'kwargs':make_options(idf)}] for idf in idfs]
     func = idf_multirun
     result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True)
     print(result)
