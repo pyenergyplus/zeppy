@@ -1,5 +1,5 @@
-Exploration of how to use zeppy
-===============================
+Tutorial and exploration -> **READ THIS**
+=========================================
 
 Lets see how this goes
 Topics

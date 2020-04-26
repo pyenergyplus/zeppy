@@ -133,7 +133,7 @@ def _zmq_worker(func, wnum=None, verbose=False):
             message = endsubscriber.recv()
             break
         
-def _zmq_vent(args_list, verbose=False):
+def _zmq_vent(args_list, verbose=False, sleeptime=0.1):
     """zmq vent for rweather"""
     context = zmq.Context()
 
@@ -154,7 +154,8 @@ def _zmq_vent(args_list, verbose=False):
         sender.send_pyobj((i, task))
 
         # Give 0MQ time to deliver - otherwise all of it will go to one worker
-        time.sleep(2)
+        print(f'sleeptime={sleeptime}')
+        time.sleep(sleeptime)
 
 
 def _zmq_resultsub(verbose=False):
@@ -173,7 +174,7 @@ def _zmq_resultsub(verbose=False):
     return message
 
 
-def _fan_out_in(func, args_list, nworkers=None, verbose=False):
+def _fan_out_in(func, args_list, nworkers=None, verbose=False, sleeptime=0.1):
     """Starts a distributed zmq run of `func` 
     Each instance of `func` is run in a separate process
     Uses the classic patallel-pipeline from zmq
@@ -197,15 +198,15 @@ def _fan_out_in(func, args_list, nworkers=None, verbose=False):
 
     # starts the vent
     p = multiprocessing.Process(target=_zmq_vent, 
-        args = (args_list, ),  kwargs={'verbose':verbose})
+        args = (args_list, ),  kwargs={'verbose':verbose, 'sleeptime':sleeptime})
     p.start()
     _v_print('started ventilator', verbose=verbose)
 
-def ipc_parallelpipe(func, args_list, nworkers=None, verbose=False):
+def ipc_parallelpipe(func, args_list, nworkers=None, verbose=False, sleeptime=0.1):
     """distributed run of the func using zmq
     Returns the results of all the run"""
     args_list = args_kwargs_helper(args_list)
-    _fan_out_in(func, args_list, nworkers=nworkers, verbose=verbose) 
+    _fan_out_in(func, args_list, nworkers=nworkers, verbose=verbose, sleeptime=sleeptime) 
         # -> parallel-pipline publishing the results
     message = _zmq_resultsub() # subscribes to the published results
     return message
@@ -317,7 +318,8 @@ def runeverything():
     idfs = [eppy.openidf(fname, epw=wfile) for fname in fnames]
     waitlist = [[{'args':idf, 'kwargs':make_options(idf)}] for idf in idfs]
     func = idf_multirun
-    result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True)
+    result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True, sleeptime=1)
+    # sleeptime=1 sec. This is a pause between sending the task out. Not sure if a single worker is grabbing all the tasks in E+. May need some testing to confirm.
     print(result)
 
 if __name__ == '__main__':
