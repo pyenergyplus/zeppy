@@ -1,3 +1,38 @@
+2020-04-25
+----------
+
+on a 4 processor machine
+========================
+
+1 processor
+-----------
+1. Total execution time: 37450 ms
+2. Total execution time: 36315 ms
+
+
+1 worker
+--------
+1. Total execution time: 36876 ms
+    1. Total taken time for all calcs: 34316 msec
+2. Total execution time: 36501 ms
+    2. Total taken time for all calcs: 34058 msec
+
+---------------------
+
+3 processors
+------------
+1. Total execution time: 19903 ms
+2. Total execution time: 18314 ms
+
+3 workers
+---------
+1. Total execution time: 23086 ms
+    1.Total taken time for all calcs: 20583 msec
+2. Total execution time: 21787 ms
+    2. Total taken time for all calcs: 19340 msec
+
+
+
 2020-04-21
 ----------
 

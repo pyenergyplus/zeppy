@@ -36,7 +36,7 @@ A node can be any or all of the following:
     - so we can do multi-processing and run it on many cores on a single computer
 - a computer
     - so we can run it on multiple computers that are on the same network
-- a group of group of computer in a local network 
+- a group of computer in a local network 
     - So we can run multiple groups of machines that may be at different locations on different local networks
     - This can also be computers at different cloud locations
     - a single computer in the local network may act as an access node 
@@ -48,15 +48,15 @@ Do the distributed processing with a single function call and get all the result
 
 Sample code ::
     
-    import zeppy
+    import zeppy import ppipes
     
-    result = zeppy.zmq_parallelpipe(runfunction, 
+    result = ppipes.ipc_parallelpipe(runfunction, 
                                     args_list, 
                                     nworkers=None)
 
     # runfunction is a function you will write, 
         # that may run idf.run(), 
-        # gather the total energy use and retrn it
+        # gather the total energy use and return it
     # args_list = {args: [idf1, idf2, idf3, ...]}
         # list of files to run
     # if nworkers=None: 
@@ -71,12 +71,6 @@ For example the above code can do the following:
 - ``result`` will be a list *total energy usage* in the same order as the items in  ``args_list``
 - see the comments in the code for greater clarity
 
-Why is the function called ``zmq_parallelpipe`` ?
-
-- This package uses `ZeroMQ Library <https://zeromq.org>`_
-- **Parallel Pipeline** is a fundamental pattern in it
-
-This is the first pass at the API. It doesn't work yet - Ha!. But there is hope :-)
 
 
 
