@@ -28,7 +28,8 @@ def runsomefiles():
     idfs = [[eppy.openidf(fname, epw=wfile), 
             {
                 'ep_version':'9-1-0',
-                'output_prefix':os.path.basename(fname).split()[0], 
+                'output_prefix':os.path.basename(fname).split()[0],
+                'output_suffix':'C', 
                 'output_directory':os.path.dirname(fname),
             }
         ] 

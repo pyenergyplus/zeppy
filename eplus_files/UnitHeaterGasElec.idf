@@ -128,7 +128,7 @@
     No,                      !- Do System Sizing Calculation
     No,                      !- Do Plant Sizing Calculation
     Yes,                     !- Run Simulation for Sizing Periods
-    No;                      !- Run Simulation for Weather File Run Periods
+    Yes;                      !- Run Simulation for Weather File Run Periods
 
   RunPeriod,
     ,                        !- Name
