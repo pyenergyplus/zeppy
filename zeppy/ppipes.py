@@ -106,21 +106,27 @@ def _zmq_worker(func, wnum=None, verbose=False):
             break
         
         if receiver in socks:
-            i, task = receiver.recv_pyobj()
-            _v_print(f'running item: {i}, in worker: {wnum}', verbose=verbose)
-            # get the args and kwargs
             try:
-                args = task['args']
-            except KeyError as e:
-                args = list()
-            try:
-                kwargs = task['kwargs']
-            except KeyError as e:
-                kwargs = dict()
-            # Do the work
-            result = func(*args, **kwargs) 
-            # Send results to sink with index number i
-            sender.send_pyobj((i, result))
+                i, task = receiver.recv_pyobj()
+                _v_print(f'running item: {i}, in worker: {wnum}', verbose=verbose)
+                # get the args and kwargs
+                try:
+                    args = task['args']
+                except KeyError as e:
+                    args = list()
+                try:
+                    kwargs = task['kwargs']
+                except KeyError as e:
+                    kwargs = dict()
+                # Do the work
+                result = func(*args, **kwargs) 
+                # Send results to sink with index number i
+                sender.send_pyobj((i, result))
+            except Exception as e:
+                print('****ERROR****', e)
+                _v_print(f'****ERROR**** above error while running item: {i}, in worker: {wnum}', verbose=True)
+                sender.send_pyobj((i, '****ERROR****'))
+                # TODO send this as a log message to logger
             _v_print(f'sent result of item: {i}, in worker: {wnum} to sink', verbose=verbose)
             
         if endsubscriber in socks:
@@ -281,13 +287,19 @@ def make_options(idf):
 
 @measure
 def runeverything():
-    waitlist = [1, 2, 3, 2, 1]
+    # waitlist = [1, 2, 3, 2, 1]
     # waitlist = [(1, ), (2, ), (3, ), (2, ), (1, )]
     # waitlist = [(1, 0), (1, 1), (2, 1), (2, 0), (0, 1)]
     # waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
     # waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
     # waitlist = [(1, 0, 1), ]
     # waitlist = [{'args':(1, ), 'kwargs':{'add':0, 'mult':1}}]
+    # waitlist = [
+    #     {'args':1, 'kwargs':{'add':3}},
+    #     {'args':(1,), 'kwargs':{'mult':3}},
+    #     {'args':(1,), 'kwargs':{'add':2, 'mult':3}},
+    #     {'args': (1, 2, 3)},
+    # ]
     # print(waitlist)
     # func = wait_add_mult
     # result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True)

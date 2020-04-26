@@ -9,3 +9,4 @@ Topics
     :maxdepth: 1
 
     simple_zeppy
+    eplus_zeppy

@@ -12,6 +12,14 @@ zeppy.ppipes module
    :undoc-members:
    :show-inheritance:
 
+zeppy.runIDFs module
+--------------------
+
+.. automodule:: zeppy.runIDFs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 zeppy.zeppy module
 ------------------
 
