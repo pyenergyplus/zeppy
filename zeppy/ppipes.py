@@ -288,39 +288,39 @@ def make_options(idf):
 
 @measure
 def runeverything():
-    # waitlist = [1, 2, 3, 2, 1]
-    # waitlist = [(1, ), (2, ), (3, ), (2, ), (1, )]
-    # waitlist = [(1, 0), (1, 1), (2, 1), (2, 0), (0, 1)]
-    # waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
-    # waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
-    # waitlist = [(1, 0, 1), ]
-    # waitlist = [{'args':(1, ), 'kwargs':{'add':0, 'mult':1}}]
-    # waitlist = [
-    #     {'args':1, 'kwargs':{'add':3}},
-    #     {'args':(1,), 'kwargs':{'mult':3}},
-    #     {'args':(1,), 'kwargs':{'add':2, 'mult':3}},
-    #     {'args': (1, 2, 3)},
-    # ]
-    # print(waitlist)
-    # func = wait_add_mult
-    # result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True)
+    waitlist = [1, 2, 3, 2, 1]
+    waitlist = [(1, ), (2, ), (3, ), (2, ), (1, )]
+    waitlist = [(1, 0), (1, 1), (2, 1), (2, 0), (0, 1)]
+    waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
+    waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
+    waitlist = [(1, 0, 1), ]
+    waitlist = [{'args':(1, ), 'kwargs':{'add':0, 'mult':1}}]
+    waitlist = [
+        {'args':1, 'kwargs':{'add':3}},
+        {'args':(1,), 'kwargs':{'mult':3}},
+        {'args':(1,), 'kwargs':{'add':2, 'mult':3}},
+        {'args': (1, 2, 3)},
+    ]
+    print(waitlist)
+    func = wait_add_mult
+    result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True)
     # print(result)
 
-    # running eppy in zeppy
-    import eppy
-    fnames = [
-        # "./eplus_files/Minimal.idf",
-            "./eplus_files/UnitHeaterGasElec.idf",
-            "./eplus_files/ZoneWSHP_wDOAS.idf",
-            "./eplus_files/ZoneWSHP_wDOAS_1.idf",
-            ]
-    wfile = "/Applications/EnergyPlus-9-1-0/WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"
-    idfs = [eppy.openidf(fname, epw=wfile) for fname in fnames]
-    waitlist = [[{'args':idf, 'kwargs':make_options(idf)}] for idf in idfs]
-    func = idf_multirun
-    result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True, sleeptime=1)
-    # sleeptime=1 sec. This is a pause between sending the task out. Not sure if a single worker is grabbing all the tasks in E+. May need some testing to confirm.
-    print(result)
+    # # running eppy in zeppy
+    # import eppy
+    # fnames = [
+    #     # "./eplus_files/Minimal.idf",
+    #         "./eplus_files/UnitHeaterGasElec.idf",
+    #         "./eplus_files/ZoneWSHP_wDOAS.idf",
+    #         "./eplus_files/ZoneWSHP_wDOAS_1.idf",
+    #         ]
+    # wfile = "/Applications/EnergyPlus-9-1-0/WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"
+    # idfs = [eppy.openidf(fname, epw=wfile) for fname in fnames]
+    # waitlist = [[{'args':idf, 'kwargs':make_options(idf)}] for idf in idfs]
+    # func = idf_multirun
+    # result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True, sleeptime=1)
+    # # sleeptime=1 sec. This is a pause between sending the task out. Not sure if a single worker is grabbing all the tasks in E+. May need some testing to confirm.
+    # print(result)
 
 if __name__ == '__main__':
     runeverything()

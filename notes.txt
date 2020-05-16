@@ -1,3 +1,69 @@
+2020-05-16
+----------
+
+issue #3
+The ipc pipe names are hardcoded. So only one instance can run
+
+test if this is true.
+- ran ppipes.py in 2 terminals
+- strange failures::
+
+    sleeptime=0.1
+    running item: 0, in worker: 1
+    ****ERROR**** wait_add_mult() argument after * must be an iterable, not int
+    ****ERROR**** above error while running item: 0, in worker: 1
+    sent result of item: 0, in worker: 1 to sink
+
+try again
+Which one broke - the 1st or the 2nd:
+1st broke::
+
+    running item: 0, in worker: 2
+    ****ERROR**** wait_add_mult() argument after * must be an iterable, not int
+    ****ERROR**** above error while running item: 0, in worker: 2
+    sent result of item: 0, in worker: 2 to sink
+
+try again:
+1st broke::
+
+    running item: 0, in worker: 0
+    ****ERROR**** wait_add_mult() argument after * must be an iterable, not int
+    ****ERROR**** above error while running item: 0, in worker: 0
+    sent result of item: 0, in worker: 0 to sink
+    sleeptime=0.1
+    running item: 1, in worker: 0
+    sleeptime=0.1
+    running item: 2, in worker: 2
+    sleeptime=0.1
+    running item: 3, in worker: 1
+    running item: 0, in worker: 3
+    ****ERROR**** wait_add_mult() argument after * must be an iterable, not int
+    ****ERROR**** above error while running item: 0, in worker: 3
+    sent result of item: 0, in worker: 3 to sink
+    running item: 1, in worker: 3
+
+2nd did not run at all::
+
+    [{'args': 1, 'kwargs': {'add': 3}}, {'args': (1,), 'kwargs': {'mult': 3}}, {'args': (1,), 'kwargs': {'add': 2, 'mult': 3}}, {'args': (1, 2, 3)}]
+    started worker 0
+    started worker 1
+    started worker 2
+    started worker 3
+    starting sink
+    started ventilator
+    number of calculations = 4
+    sleeptime=0.1
+    sleeptime=0.1
+    sleeptime=0.1
+    sleeptime=0.1
+    Total execution time: 3228 ms
+    Total taken time for all calcs: 17014 msec
+
+This is weird as shit. I was expecting a pip clash (like a port clash)
+ha ! something else is happening. Worth exploring
+- try running something simpler with same pipes
+
+
 2020-04-25
 ----------
 
