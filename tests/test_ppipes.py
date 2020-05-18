@@ -3,6 +3,20 @@
 from zeppy import ppipes
 import pytest
 
+
+@pytest.mark.parametrize(
+    'strlength, expected',
+    [
+        (3, 3), # strlength, expected
+    ]
+)
+def test_randstr(strlength, expected):
+    """py.test for randstr"""
+    result = ppipes.randstr(strlength, )
+    assert len(result) == expected
+    result2 = ppipes.randstr(strlength)
+    assert result2 != result
+    
 @pytest.mark.parametrize('seconds, expected', [
     (.1, .1),
     ])
