@@ -1,3 +1,15 @@
+2020-05-17
+----------
+
+- looked at the pipes
+- they exist in the disk
+- tail does not open the disk entity, satys it is a socket
+
+So:
+
+- make a function to make a random str
+- 
+
 2020-05-16
 ----------
 

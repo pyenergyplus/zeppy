@@ -1,13 +1,15 @@
 """parallel pipeline functions"""
 
-import zmq
+
 import time
 import os.path
-
+import string
+import random
 import multiprocessing
-
 from datetime import date, datetime
 from functools import wraps
+
+import zmq
 
 def measure(func):
     @wraps(func)
@@ -20,28 +22,33 @@ def measure(func):
             print(f"Total execution time: {end_ if end_ > 0 else 0} ms")
     return _time_it
     
-
+def randstr(strlength):
+    """return a string of length strlength"""
+    randletters = string.ascii_lowercase + string.digits
+    return ''.join([random.choice(randletters) for i in range(strlength)])
+    
 
 def _v_print(txt, verbose=False):
     """print if verbose==True"""
     if verbose:
         print(txt)
 
-def _zmq_sink(verbose=False):
+def _zmq_sink(verbose=False, sinkipc=None, killipc=None, resultipc=None):
     """zmq sink for rweather"""
     context = zmq.Context()
 
     # Socket to receive messages on
     receiver = context.socket(zmq.PULL)
-    receiver.bind("ipc:///tmp/5558")
+    receiver.bind(sinkipc)
+    
     
     # socket to publish end of tasks
     endpubliser = context.socket(zmq.PUB)
-    endpubliser.bind("ipc:///tmp/zmq_endpub")
+    endpubliser.bind(killipc)
 
     # socket to publish results
     resultpubliser = context.socket(zmq.PUB)
-    resultpubliser.bind("ipc:///tmp/zmq_resultpuh")
+    resultpubliser.bind(resultipc)
 
     num_calc = receiver.recv_pyobj()
     # num_calc = num_calc.decode()
@@ -73,7 +80,7 @@ def _zmq_sink(verbose=False):
     _v_print("Total taken time for all calcs: %d msec" % ((tend-tstart)*1000), 
         verbose=verbose)
 
-def _zmq_worker(func, wnum=None, verbose=False):
+def _zmq_worker(func, wnum=None, verbose=False, sinkipc=None, killipc=None, ventipc=None):
     """zmq worker for rweather"""
     if wnum is None:
         wnum = 0
@@ -82,15 +89,16 @@ def _zmq_worker(func, wnum=None, verbose=False):
 
     # Socket to receive messages on
     receiver = context.socket(zmq.PULL)
-    receiver.connect("ipc:///tmp/5557")
+    receiver.connect(ventipc)
 
-    # Socket to send messages to
+    # Socket to send messages to sink
     sender = context.socket(zmq.PUSH)
-    sender.connect("ipc:///tmp/5558")
+    sender.connect(sinkipc)
+        
     
     # socket to recieve end message to stop this worker
     endsubscriber = context.socket(zmq.SUB)
-    endsubscriber.connect("ipc:///tmp/zmq_endpub")
+    endsubscriber.connect(killipc)
     endsubscriber.setsockopt_string(zmq.SUBSCRIBE, '')
 
     # Initialize poll set
@@ -133,18 +141,18 @@ def _zmq_worker(func, wnum=None, verbose=False):
             message = endsubscriber.recv()
             break
         
-def _zmq_vent(args_list, verbose=False, sleeptime=0.1):
+def _zmq_vent(args_list, verbose=False, sleeptime=0.1, sinkipc=None, ventipc=None):
     """zmq vent for rweather"""
     context = zmq.Context()
 
     # Socket to send messages on
     sender = context.socket(zmq.PUSH)
-    sender.bind("ipc:///tmp/5557")
+    sender.bind(ventipc)
 
     # Socket with direct access to the sink: used to synchronize start of batch
     # if sink is not running at this point - whole thing gets fucked up
     sink = context.socket(zmq.PUSH)
-    sink.connect("ipc:///tmp/5558")
+    sink.connect(sinkipc)
 
     totwork = len(args_list)
     sink.send_pyobj(totwork)
@@ -158,14 +166,14 @@ def _zmq_vent(args_list, verbose=False, sleeptime=0.1):
         time.sleep(sleeptime)
 
 
-def _zmq_resultsub(verbose=False):
+def _zmq_resultsub(verbose=False, resultipc=None):
     """get the results of the reweather calculations"""
 
     #  Socket to talk to server
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
 
-    socket.connect("ipc:///tmp/zmq_resultpuh")
+    socket.connect(resultipc)
 
 
     socket.setsockopt_string(zmq.SUBSCRIBE, '')
@@ -174,12 +182,16 @@ def _zmq_resultsub(verbose=False):
     return message
 
 
-def _fan_out_in(func, args_list, nworkers=None, verbose=False, sleeptime=0.1):
+def _fan_out_in(func, args_list, nworkers=None, verbose=False, sleeptime=0.1, ipcs=None):
     """Starts a distributed zmq run of `func` 
     Each instance of `func` is run in a separate process
     Uses the classic patallel-pipeline from zmq
         - vent -> workers -> sink
     The results are published in PUB-SUB pattern """
+    sinkipc = ipcs['sinkipc']
+    killipc = ipcs['killipc']
+    resultipc = ipcs['resultipc']
+    ventipc = ipcs['ventipc']
     
     # starts the workers
     if nworkers is None:
@@ -187,28 +199,57 @@ def _fan_out_in(func, args_list, nworkers=None, verbose=False, sleeptime=0.1):
     for i in range(nworkers):
     # for i in range(1):
         
-        p = multiprocessing.Process(target=_zmq_worker, args=(func, i, ), kwargs={'verbose':verbose})
+        p = multiprocessing.Process(target=_zmq_worker, args=(func, i, ), 
+                                kwargs={'verbose':verbose, 
+                                        'sinkipc':sinkipc,
+                                        'killipc':killipc,
+                                        'ventipc':ventipc
+                                    })
         p.start()
         _v_print(f'started worker {i}', verbose=verbose)
         
     # Starts sink
-    p = multiprocessing.Process(target=_zmq_sink,  kwargs={'verbose':verbose})
+    p = multiprocessing.Process(target=_zmq_sink,  
+                        kwargs={'verbose':verbose, 
+                        'sinkipc':sinkipc,
+                        'killipc':killipc,
+                        'resultipc':resultipc
+                    })
     p.start()
     _v_print('starting sink', verbose=verbose)
 
     # starts the vent
     p = multiprocessing.Process(target=_zmq_vent, 
-        args = (args_list, ),  kwargs={'verbose':verbose, 'sleeptime':sleeptime})
+            args = (args_list, ),  
+            kwargs={'verbose':verbose, 
+                'sleeptime':sleeptime, 
+                'sinkipc':sinkipc,
+                'ventipc':ventipc
+            })
     p.start()
     _v_print('started ventilator', verbose=verbose)
 
+def _sinkipc(size=8):
+    return f'ipc:///tmp/zeppysink_{randstr(size)}'
+def _killipc(size=8):
+    return f'ipc:///tmp/zeppykill_{randstr(size)}'
+def _resultipc(size=8):
+    return f'ipc:///tmp/zeppyresult_{randstr(size)}'
+def _ventipc(size=8):
+    return f'ipc:///tmp/zeppyvent_{randstr(size)}'
+    
+    
 def ipc_parallelpipe(func, args_list, nworkers=None, verbose=False, sleeptime=0.1):
     """distributed run of the func using zmq
     Returns the results of all the run"""
     args_list = args_kwargs_helper(args_list)
-    _fan_out_in(func, args_list, nworkers=nworkers, verbose=verbose, sleeptime=sleeptime) 
+    # generate ipcs
+    sz=3
+    ipcs = dict(sinkipc=_sinkipc(sz), killipc=_killipc(sz), resultipc=_resultipc(sz), ventipc=_ventipc(sz))
+    _fan_out_in(func, args_list, nworkers=nworkers, verbose=verbose, sleeptime=sleeptime, ipcs=ipcs) 
         # -> parallel-pipline publishing the results
-    message = _zmq_resultsub() # subscribes to the published results
+    message = _zmq_resultsub(resultipc=ipcs['resultipc']) # subscribes to the published results
+    
     return message
     
 def args_kwargs_helper(args_kwargs_list):
@@ -288,39 +329,40 @@ def make_options(idf):
 
 @measure
 def runeverything():
-    waitlist = [1, 2, 3, 2, 1]
-    waitlist = [(1, ), (2, ), (3, ), (2, ), (1, )]
-    waitlist = [(1, 0), (1, 1), (2, 1), (2, 0), (0, 1)]
-    waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
-    waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
-    waitlist = [(1, 0, 1), ]
-    waitlist = [{'args':(1, ), 'kwargs':{'add':0, 'mult':1}}]
-    waitlist = [
-        {'args':1, 'kwargs':{'add':3}},
-        {'args':(1,), 'kwargs':{'mult':3}},
-        {'args':(1,), 'kwargs':{'add':2, 'mult':3}},
-        {'args': (1, 2, 3)},
-    ]
-    print(waitlist)
-    func = wait_add_mult
-    result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True)
+    # waitlist = [1, 2, 3, 2, 1]
+    # # waitlist = [(1, ), (2, ), (3, ), (2, ), (1, )]
+    # # waitlist = [(1, 0), (1, 1), (2, 1), (2, 0), (0, 1)]
+    # # waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
+    # waitlist = [(1, 0, 1), (1, 1, 1), (2, 1, 1), (2, 0, 1), (0, 1, 1)]
+    # # waitlist = [(1, 0, 1), ]
+    # # waitlist = [{'args':(1, ), 'kwargs':{'add':0, 'mult':1}}]
+    # waitlist = [
+    #     # {'args':1, 'kwargs':{'add':3}},
+    #     {'args':(1,), 'kwargs':{'mult':3}},
+    #     {'args':(1,), 'kwargs':{'add':2, 'mult':3}},
+    #     {'args': (1, 2, 3)},
+    # ]
+    # print(waitlist)
+    # func = wait_add_mult
+    # result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True)
+    #
     # print(result)
 
-    # # running eppy in zeppy
-    # import eppy
-    # fnames = [
-    #     # "./eplus_files/Minimal.idf",
-    #         "./eplus_files/UnitHeaterGasElec.idf",
-    #         "./eplus_files/ZoneWSHP_wDOAS.idf",
-    #         "./eplus_files/ZoneWSHP_wDOAS_1.idf",
-    #         ]
-    # wfile = "/Applications/EnergyPlus-9-1-0/WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"
-    # idfs = [eppy.openidf(fname, epw=wfile) for fname in fnames]
-    # waitlist = [[{'args':idf, 'kwargs':make_options(idf)}] for idf in idfs]
-    # func = idf_multirun
-    # result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True, sleeptime=1)
-    # # sleeptime=1 sec. This is a pause between sending the task out. Not sure if a single worker is grabbing all the tasks in E+. May need some testing to confirm.
-    # print(result)
+    # running eppy in zeppy
+    import eppy
+    fnames = [
+        # "./eplus_files/Minimal.idf",
+            "./eplus_files/UnitHeaterGasElec.idf",
+            "./eplus_files/ZoneWSHP_wDOAS.idf",
+            "./eplus_files/ZoneWSHP_wDOAS_1.idf",
+            ]
+    wfile = "/Applications/EnergyPlus-9-1-0/WeatherData/USA_CO_Golden-NREL.724666_TMY3.epw"
+    idfs = [eppy.openidf(fname, epw=wfile) for fname in fnames]
+    waitlist = [[{'args':idf, 'kwargs':make_options(idf)}] for idf in idfs]
+    func = idf_multirun
+    result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True, sleeptime=1)
+    # sleeptime=1 sec. This is a pause between sending the task out. Not sure if a single worker is grabbing all the tasks in E+. May need some testing to confirm.
+    print(result)
 
 if __name__ == '__main__':
     runeverything()
