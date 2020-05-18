@@ -8,7 +8,8 @@
 So:
 
 - make a function to make a random str
-- 
+- use it to generate random pip names
+- done ... hand tested with two instances
 
 2020-05-16
 ----------
