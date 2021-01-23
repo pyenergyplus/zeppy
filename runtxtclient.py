@@ -46,7 +46,8 @@ getdict = dict(
 
 print("sending message")
 idftxt, wfiletxt = to_zeppy_runandget(idfname, wfile)
-socket.send_pyobj((idftxt, wfiletxt, getdict))
+id = (idfname, wfile)
+socket.send_pyobj((id, (idftxt, wfiletxt, getdict)))
 
 #  Get the reply.
 message = socket.recv_pyobj()

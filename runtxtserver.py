@@ -36,8 +36,8 @@ while True:
     print("Received request:")
     
     #  Do some 'work'
-    idftxt, wfiletxt, getdict = message
+    id, (idftxt, wfiletxt, getdict) = message
     fullresult = zeppy_runandget(idftxt, wfiletxt, getdict)
 
     #  Send reply back to client
-    socket.send_pyobj(fullresult)
+    socket.send_pyobj((id, fullresult))
