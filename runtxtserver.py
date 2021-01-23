@@ -18,8 +18,7 @@ import witheppy
 import eppy
 import witheppy.runandget as runandget
 
-def runandreply(message):
-    idftxt, wfiletxt, getdict = message
+def zeppy_runandget(idftxt, wfiletxt, getdict):
     with tempfile.TemporaryDirectory() as tmpdir:
         idf_temp_file = f'{tmpdir}/a.idf'
         open(idf_temp_file, 'w').write(idftxt)
@@ -37,7 +36,8 @@ while True:
     print("Received request:")
     
     #  Do some 'work'
-    fullresult = runandreply(message)
+    idftxt, wfiletxt, getdict = message
+    fullresult = zeppy_runandget(idftxt, wfiletxt, getdict)
 
     #  Send reply back to client
     socket.send_pyobj(fullresult)

@@ -16,12 +16,17 @@ context = zmq.Context()
 print("Connecting to hello world server...")
 socket = context.socket(zmq.REQ)
 socket.connect("tcp://localhost:5555")
+# socket.connect("tcp://192.168.42.144:5555")
+
+def to_zeppy_runandget(idfname, wfile):
+    idftxt = open(idfname, 'r').read()
+    wfiletxt = open(wfile, 'r').read()
+    return idftxt, wfiletxt
 
 # send request
 idfname = "./idffolder/1ZoneUncontrolled.idf"
-idftxt = open(idfname, 'r').read()
+idfname = "/Applications/EnergyPlus-9-1-0/ExampleFiles/1ZoneEvapCooler.idf"
 wfile = "./idffolder/USA_CA_San.Francisco.Intl.AP.724940_TMY3.epw"
-wfiletxt = open(wfile, 'r').read()
 
 getdict = dict(
     end_file=dict(whichfile="end", entirefile=True),
@@ -40,6 +45,7 @@ getdict = dict(
 )
 
 print("sending message")
+idftxt, wfiletxt = to_zeppy_runandget(idfname, wfile)
 socket.send_pyobj((idftxt, wfiletxt, getdict))
 
 #  Get the reply.
