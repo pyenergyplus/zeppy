@@ -7,6 +7,8 @@
 
 import zmq
 import eppy
+from zeppy import z_runners 
+
 import pprint
 pp = pprint.PrettyPrinter()
 
@@ -17,11 +19,6 @@ print("Connecting to hello world server...")
 socket = context.socket(zmq.REQ)
 socket.connect("tcp://localhost:5555")
 # socket.connect("tcp://192.168.42.144:5555")
-
-def to_zeppy_runandget(idfname, wfile):
-    idftxt = open(idfname, 'r').read()
-    wfiletxt = open(wfile, 'r').read()
-    return idftxt, wfiletxt
 
 # send request
 idfname = "./idffolder/1ZoneUncontrolled.idf"
@@ -45,7 +42,7 @@ getdict = dict(
 )
 
 print("sending message")
-idftxt, wfiletxt = to_zeppy_runandget(idfname, wfile)
+idftxt, wfiletxt = z_runners.to_zeppy_runandget(idfname, wfile)
 socket.send_pyobj((idftxt, wfiletxt, getdict))
 
 #  Get the reply.
