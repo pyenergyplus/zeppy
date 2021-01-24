@@ -1,2 +1,6 @@
 pyzmq
+# - 
+witheppy
+# - 
 nbsphinx
+black

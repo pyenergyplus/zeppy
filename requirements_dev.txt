@@ -16,5 +16,8 @@ jupyter
 nbsphinx
 
 # ---
-eppy
-witheppy
+# eppy
+# witheppy
+
+# pip install -e ../eppy
+-e ../eppy

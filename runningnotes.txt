@@ -1,0 +1,17 @@
+2021-01-21
+----------
+
+do runandget with REP-REQ
+
+- client
+    - send idfname, wfilename
+- server
+    - anon_runandget on idfname, wfilename
+    - reply tablefile[0]
+- client
+    - receive and print reply
+    
+- alter
+- server
+    - write the idf to a temp file and then run.
+    
