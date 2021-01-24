@@ -9,12 +9,14 @@
 
 import zmq
 import eppy
+
 try:
     import zeppy.z_runners as z_runners
 except ModuleNotFoundError as e:
-    import z_runners 
+    import z_runners
 
 import pprint
+
 pp = pprint.PrettyPrinter()
 
 context = zmq.Context()
@@ -24,6 +26,7 @@ print("Connecting to hello world server...")
 socket = context.socket(zmq.REQ)
 socket.connect("tcp://localhost:5555")
 # socket.connect("tcp://192.168.42.144:5555")
+
 
 def main():
     # send request
@@ -45,7 +48,7 @@ def main():
             tablename="Site and Source Energy",  # tableindex takes priority if both given
             cells=[[-2, 1], [-2, -2]],  # will return 2 cells
         ),
-        HTML_file=dict(whichfile="htm", tableindex=0, table=True)
+        HTML_file=dict(whichfile="htm", tableindex=0, table=True),
     )
 
     print("sending message")
@@ -56,10 +59,11 @@ def main():
 
     #  Get the reply.
     message = socket.recv_pyobj()
-    print('-' *8)
+    print("-" * 8)
     print("results are:")
     pp.pprint(message)
     # print("Received reply %s [ %s ]" % (request, message))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

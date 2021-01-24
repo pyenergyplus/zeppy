@@ -9,10 +9,11 @@
 
 import time
 import zmq
+
 try:
     import zeppy.z_runners as z_runners
 except ModuleNotFoundError as e:
-    import z_runners 
+    import z_runners
 
 context = zmq.Context()
 socket = context.socket(zmq.REP)
@@ -24,7 +25,7 @@ def main():
         #  Wait for next request from client
         message = socket.recv_pyobj()
         print("Received request:")
-    
+
         #  Do some 'work'
         run_id, (idftxt, wfiletxt, getdict) = message
         fullresult = z_runners.zeppy_runandget(idftxt, wfiletxt, getdict)
@@ -32,6 +33,7 @@ def main():
         #  Send reply back to client
         message = run_id, fullresult
         socket.send_pyobj(message)
-    
-if __name__ == '__main__':
-    main()    
+
+
+if __name__ == "__main__":
+    main()
