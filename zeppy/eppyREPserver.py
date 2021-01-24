@@ -9,7 +9,7 @@
 
 import time
 import zmq
-from zeppy import z_runners 
+import z_runners 
 
 context = zmq.Context()
 socket = context.socket(zmq.REP)

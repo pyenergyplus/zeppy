@@ -9,7 +9,7 @@
 
 import zmq
 import eppy
-from zeppy import z_runners 
+import z_runners 
 
 import pprint
 pp = pprint.PrettyPrinter()
