@@ -1,8 +1,10 @@
-#
-#   Hello World client in Python
-#   Connects REQ socket to tcp://localhost:5555
-#   Sends "Hello" to server, expects "World" back
-#
+# Copyright (c) 2021 Santosh Philip
+# =======================================================================
+#  Distributed under the MIT License.
+#  (See accompanying file LICENSE or copy at
+#  http://opensource.org/licenses/MIT)
+# =======================================================================
+# -*- coding: utf-8 -*-
 """client sends a text file of idf and wfile"""
 
 import zmq
