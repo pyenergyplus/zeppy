@@ -50,15 +50,18 @@ def _zmq_sink(verbose=False, sinkipc=None, killipc=None, resultipc=None):
 
     # Socket to receive messages on
     receiver = context.socket(zmq.PULL)
-    receiver.bind(sinkipc)
+    # receiver.bind(sinkipc)
+    receiver.bind("tcp://*:5558")
 
     # socket to publish end of tasks
     endpubliser = context.socket(zmq.PUB)
-    endpubliser.bind(killipc)
+    # endpubliser.bind(killipc)
+    endpubliser.bind("tcp://*:5555")
 
     # socket to publish results
     resultpubliser = context.socket(zmq.PUB)
-    resultpubliser.bind(resultipc)
+    # resultpubliser.bind(resultipc)
+    resultpubliser.bind("tcp://*:5556")
 
     num_calc = receiver.recv_pyobj()
     # num_calc = num_calc.decode()
@@ -104,15 +107,19 @@ def _zmq_worker(
 
     # Socket to receive messages on
     receiver = context.socket(zmq.PULL)
-    receiver.connect(ventipc)
+    # receiver.connect(ventipc)
+    receiver.connect("tcp://localhost:5557")
 
     # Socket to send messages to sink
     sender = context.socket(zmq.PUSH)
-    sender.connect(sinkipc)
+    # print(111,sinkipc)
+    # sender.connect(sinkipc)
+    sender.connect("tcp://localhost:5558")
 
     # socket to recieve end message to stop this worker
     endsubscriber = context.socket(zmq.SUB)
-    endsubscriber.connect(killipc)
+    # endsubscriber.connect(killipc)
+    endsubscriber.connect("tcp://localhost:5555")
     endsubscriber.setsockopt_string(zmq.SUBSCRIBE, "")
 
     # Initialize poll set
@@ -167,12 +174,15 @@ def _zmq_vent(args_list, verbose=False, sleeptime=0.1, sinkipc=None, ventipc=Non
 
     # Socket to send messages on
     sender = context.socket(zmq.PUSH)
-    sender.bind(ventipc)
+    # print(171, ventipc)
+    # sender.bind(ventipc)
+    sender.bind("tcp://*:5557")
 
     # Socket with direct access to the sink: used to synchronize start of batch
     # if sink is not running at this point - whole thing gets fucked up
     sink = context.socket(zmq.PUSH)
-    sink.connect(sinkipc)
+    # sink.connect(sinkipc)
+    sink.connect("tcp://localhost:5558")
 
     totwork = len(args_list)
     sink.send_pyobj(totwork)
@@ -182,7 +192,7 @@ def _zmq_vent(args_list, verbose=False, sleeptime=0.1, sinkipc=None, ventipc=Non
         sender.send_pyobj((i, task))
 
         # Give 0MQ time to deliver - otherwise all of it will go to one worker
-        print(f"sleeptime={sleeptime}")
+        # print(f"sleeptime={sleeptime}")
         time.sleep(sleeptime)
 
 
@@ -193,7 +203,8 @@ def _zmq_resultsub(verbose=False, resultipc=None):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
 
-    socket.connect(resultipc)
+    # socket.connect(resultipc)
+    socket.connect("tcp://localhost:5556")
 
     socket.setsockopt_string(zmq.SUBSCRIBE, "")
     # print('started result subscriber')
@@ -283,18 +294,19 @@ def _ventipc(size=8):
 # ---
 
 def _sinktcp():
-    return f"tcp://*:5558"
+    # return f"tcp://*:5558"
+    return f"tcp://localhost:5558"
 
 
-def _killtcp(size=8):
+def _killtcp():
     return f"tcp://localhost:5555"
 
 
-def _resulttcp(size=8):
+def _resulttcp():
     return f"tcp://localhost:5556"
 
 
-def _venttcp(size=8):
+def _venttcp():
     return f"tcp://localhost:5558"
 
 # ---
@@ -335,10 +347,10 @@ def tcp_parallelpipe(func, args_list, nworkers=None, verbose=False, sleeptime=0.
     # generate ipcs
     # sz = 3
     tcps = dict(
-        sinktcp=_sinktcp(sz),
-        killtcp=_killtcp(sz),
-        resulttcp=_resulttcp(sz),
-        venttcp=_venttcp(sz),
+        sinkipc=_sinktcp(),
+        killipc=_killtcp(),
+        resultipc=_resulttcp(),
+        ventipc=_venttcp(),
     )
     _fan_out_in(
         func,
@@ -350,7 +362,7 @@ def tcp_parallelpipe(func, args_list, nworkers=None, verbose=False, sleeptime=0.
     )
     # -> parallel-pipline publishing the results
     message = _zmq_resultsub(
-        resultipc=ipcs["resultipc"]
+        resultipc=tcps["resultipc"]
     )  # subscribes to the published results
 
     return message
