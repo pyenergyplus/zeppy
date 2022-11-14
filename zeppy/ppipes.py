@@ -263,6 +263,7 @@ def _fan_out_in(
     p.start()
     _v_print("started ventilator", verbose=verbose)
 
+# ---
 
 def _sinkipc(size=8):
     return f"ipc:///tmp/zeppysink_{randstr(size)}"
@@ -279,10 +280,29 @@ def _resultipc(size=8):
 def _ventipc(size=8):
     return f"ipc:///tmp/zeppyvent_{randstr(size)}"
 
+# ---
+
+def _sinktcp():
+    return f"tcp://*:5558"
+
+
+def _killtcp(size=8):
+    return f"tcp://localhost:5555"
+
+
+def _resulttcp(size=8):
+    return f"tcp://localhost:5556"
+
+
+def _venttcp(size=8):
+    return f"tcp://localhost:5558"
+
+# ---
 
 def ipc_parallelpipe(func, args_list, nworkers=None, verbose=False, sleeptime=0.1):
     """distributed run of the func using zmq
-    Returns the results of all the run"""
+    Returns the results of all the run
+    Uses IPC"""
     args_list = args_kwargs_helper(args_list)
     # generate ipcs
     sz = 3
@@ -299,6 +319,34 @@ def ipc_parallelpipe(func, args_list, nworkers=None, verbose=False, sleeptime=0.
         verbose=verbose,
         sleeptime=sleeptime,
         ipcs=ipcs,
+    )
+    # -> parallel-pipline publishing the results
+    message = _zmq_resultsub(
+        resultipc=ipcs["resultipc"]
+    )  # subscribes to the published results
+
+    return message
+
+def tcp_parallelpipe(func, args_list, nworkers=None, verbose=False, sleeptime=0.1):
+    """distributed run of the func using zmq
+    Returns the results of all the run
+    Uses TCP """
+    args_list = args_kwargs_helper(args_list)
+    # generate ipcs
+    # sz = 3
+    tcps = dict(
+        sinktcp=_sinktcp(sz),
+        killtcp=_killtcp(sz),
+        resulttcp=_resulttcp(sz),
+        venttcp=_venttcp(sz),
+    )
+    _fan_out_in(
+        func,
+        args_list,
+        nworkers=nworkers,
+        verbose=verbose,
+        sleeptime=sleeptime,
+        ipcs=tcps,
     )
     # -> parallel-pipline publishing the results
     message = _zmq_resultsub(
