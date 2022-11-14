@@ -182,7 +182,7 @@ def _zmq_vent(args_list, verbose=False, sleeptime=0.1, sinkipc=None, ventipc=Non
         sender.send_pyobj((i, task))
 
         # Give 0MQ time to deliver - otherwise all of it will go to one worker
-        print(f"sleeptime={sleeptime}")
+        # print(f"sleeptime={sleeptime}")
         time.sleep(sleeptime)
 
 
