@@ -1,3 +1,8 @@
+2022-11-14
+----------
+
+- parallel pipes now wrks with TCP -> just hacked together
+
 2021-01-21
 ----------
 
