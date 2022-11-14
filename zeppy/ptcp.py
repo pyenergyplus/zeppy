@@ -5,7 +5,7 @@
 #  http://opensource.org/licenses/MIT)
 # =======================================================================
 # -*- coding: utf-8 -*-
-"""parallel pipeline functions"""
+"""parallel pipeline tcp functions"""
 
 
 import time
@@ -50,15 +50,18 @@ def _zmq_sink(verbose=False, sinkipc=None, killipc=None, resultipc=None):
 
     # Socket to receive messages on
     receiver = context.socket(zmq.PULL)
-    receiver.bind(sinkipc)
+    # receiver.bind(sinkipc)
+    receiver.bind("tcp://*:5558")
 
     # socket to publish end of tasks
     endpubliser = context.socket(zmq.PUB)
-    endpubliser.bind(killipc)
+    # endpubliser.bind(killipc)
+    endpubliser.bind("tcp://*:5555")
 
     # socket to publish results
     resultpubliser = context.socket(zmq.PUB)
-    resultpubliser.bind(resultipc)
+    # resultpubliser.bind(resultipc)
+    resultpubliser.bind("tcp://*:5556")
 
     num_calc = receiver.recv_pyobj()
     # num_calc = num_calc.decode()
@@ -104,15 +107,19 @@ def _zmq_worker(
 
     # Socket to receive messages on
     receiver = context.socket(zmq.PULL)
-    receiver.connect(ventipc)
+    # receiver.connect(ventipc)
+    receiver.connect("tcp://localhost:5557")
 
     # Socket to send messages to sink
     sender = context.socket(zmq.PUSH)
-    sender.connect(sinkipc)
+    # print(111,sinkipc)
+    # sender.connect(sinkipc)
+    sender.connect("tcp://localhost:5558")
 
     # socket to recieve end message to stop this worker
     endsubscriber = context.socket(zmq.SUB)
-    endsubscriber.connect(killipc)
+    # endsubscriber.connect(killipc)
+    endsubscriber.connect("tcp://localhost:5555")
     endsubscriber.setsockopt_string(zmq.SUBSCRIBE, "")
 
     # Initialize poll set
@@ -167,12 +174,15 @@ def _zmq_vent(args_list, verbose=False, sleeptime=0.1, sinkipc=None, ventipc=Non
 
     # Socket to send messages on
     sender = context.socket(zmq.PUSH)
-    sender.bind(ventipc)
+    # print(171, ventipc)
+    # sender.bind(ventipc)
+    sender.bind("tcp://*:5557")
 
     # Socket with direct access to the sink: used to synchronize start of batch
     # if sink is not running at this point - whole thing gets fucked up
     sink = context.socket(zmq.PUSH)
-    sink.connect(sinkipc)
+    # sink.connect(sinkipc)
+    sink.connect("tcp://localhost:5558")
 
     totwork = len(args_list)
     sink.send_pyobj(totwork)
@@ -193,7 +203,8 @@ def _zmq_resultsub(verbose=False, resultipc=None):
     context = zmq.Context()
     socket = context.socket(zmq.SUB)
 
-    socket.connect(resultipc)
+    # socket.connect(resultipc)
+    socket.connect("tcp://localhost:5556")
 
     socket.setsockopt_string(zmq.SUBSCRIBE, "")
     # print('started result subscriber')
@@ -263,6 +274,7 @@ def _fan_out_in(
     p.start()
     _v_print("started ventilator", verbose=verbose)
 
+# ---
 
 def _sinkipc(size=8):
     return f"ipc:///tmp/zeppysink_{randstr(size)}"
@@ -279,10 +291,30 @@ def _resultipc(size=8):
 def _ventipc(size=8):
     return f"ipc:///tmp/zeppyvent_{randstr(size)}"
 
+# ---
+
+def _sinktcp():
+    # return f"tcp://*:5558"
+    return f"tcp://localhost:5558"
+
+
+def _killtcp():
+    return f"tcp://localhost:5555"
+
+
+def _resulttcp():
+    return f"tcp://localhost:5556"
+
+
+def _venttcp():
+    return f"tcp://localhost:5558"
+
+# ---
 
 def ipc_parallelpipe(func, args_list, nworkers=None, verbose=False, sleeptime=0.1):
     """distributed run of the func using zmq
-    Returns the results of all the run"""
+    Returns the results of all the run
+    Uses IPC"""
     args_list = args_kwargs_helper(args_list)
     # generate ipcs
     sz = 3
@@ -303,6 +335,34 @@ def ipc_parallelpipe(func, args_list, nworkers=None, verbose=False, sleeptime=0.
     # -> parallel-pipline publishing the results
     message = _zmq_resultsub(
         resultipc=ipcs["resultipc"]
+    )  # subscribes to the published results
+
+    return message
+
+def tcp_parallelpipe(func, args_list, nworkers=None, verbose=False, sleeptime=0.1):
+    """distributed run of the func using zmq
+    Returns the results of all the run
+    Uses TCP """
+    args_list = args_kwargs_helper(args_list)
+    # generate ipcs
+    # sz = 3
+    tcps = dict(
+        sinkipc=_sinktcp(),
+        killipc=_killtcp(),
+        resultipc=_resulttcp(),
+        ventipc=_venttcp(),
+    )
+    _fan_out_in(
+        func,
+        args_list,
+        nworkers=nworkers,
+        verbose=verbose,
+        sleeptime=sleeptime,
+        ipcs=tcps,
+    )
+    # -> parallel-pipline publishing the results
+    message = _zmq_resultsub(
+        resultipc=tcps["resultipc"]
     )  # subscribes to the published results
 
     return message
