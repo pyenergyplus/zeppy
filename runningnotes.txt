@@ -1,3 +1,9 @@
+2022-11-15
+----------
+
+- check if tutorial 2 (E+) works on new computer - python3.10
+- yes !! it runs fine.
+
 2021-01-21
 ----------
 
