@@ -382,19 +382,37 @@ def idf_multirun(idf_kwargs):
     eppy.runner.run_functions.runIDFs([(idf, options)])
 
 
+# def make_options(idf):
+#     idfversion = idf.idfobjects["version"][0].Version_Identifier.split(".")
+#     idfversion.extend([0] * (3 - len(idfversion)))
+#     idfversionstr = "-".join([str(item) for item in idfversion])
+#     fname = idf.idfname
+#     options = {
+#         "ep_version": idfversionstr,
+#         "output_prefix": os.path.basename(fname).split()[0],
+#         "output_suffix": "C",
+#         "output_directory": os.path.dirname(fname),
+#     }
+#     return options
+
+
 def make_options(idf):
-    idfversion = idf.idfobjects["version"][0].Version_Identifier.split(".")
+    """Make options for run, so that it runs like EPLaunch on Windows"""
+    idfversion = idf.idfobjects['version'][0].Version_Identifier.split('.')
     idfversion.extend([0] * (3 - len(idfversion)))
-    idfversionstr = "-".join([str(item) for item in idfversion])
+    idfversionstr = '-'.join([str(item) for item in idfversion])
     fname = idf.idfname
     options = {
-        "ep_version": idfversionstr,
-        "output_prefix": os.path.basename(fname).split()[0],
-        "output_suffix": "C",
-        "output_directory": os.path.dirname(fname),
-    }
+        'ep_version':idfversionstr, # runIDFs needs the version number
+            # idf.run does not need the above arg
+            # you can leave it there and it will be fine :-)
+        'output_prefix':os.path.basename(fname).split('.')[0],
+        'output_suffix':'C',
+        'output_directory':os.path.dirname(fname),
+        'readvars':True,
+        'expandobjects':True
+        }
     return options
-
 
 @measure
 def runeverything():
@@ -431,9 +449,13 @@ def runeverything():
     )
     idfs = [eppy.openidf(fname, epw=wfile) for fname in fnames]
     waitlist = [[{"args": idf, "kwargs": make_options(idf)}] for idf in idfs]
+    for w in waitlist:
+        print(w)
     func = idf_multirun
     result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True, sleeptime=1)
     # sleeptime=1 sec. This is a pause between sending the task out. Not sure if a single worker is grabbing all the tasks in E+. May need some testing to confirm.
+    for w in waitlist:
+        print(w)
     print(result)
 
 

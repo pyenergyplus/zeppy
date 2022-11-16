@@ -1,6 +1,16 @@
 2022-11-15
 ----------
 
+- with the E+ runs, the results have unexpected extension - *.idf.err ??
+- this has ben fixed
+
+- new error. Failing because it cannot find the in.idf file
+- Is it making the in.idf files in the same place ??
+- try running runIDFs
+
+2022-11-15
+----------
+
 - check if tutorial 2 (E+) works on new computer - python3.10
 - yes !! it runs fine.
 
