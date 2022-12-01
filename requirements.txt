@@ -1,5 +1,6 @@
 pyzmq
 # - 
+eppy
 witheppy
 # - 
 nbsphinx
