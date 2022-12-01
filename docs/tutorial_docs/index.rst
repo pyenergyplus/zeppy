@@ -10,4 +10,6 @@ Topics
 
     simple_zeppy
     eplus_zeppy
+    simple_zeppy_tcp
+    eplus_zeppy_tcp
     REQ_REP_eppy
