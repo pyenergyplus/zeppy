@@ -28,6 +28,14 @@ zeppy.ppipes module
    :undoc-members:
    :show-inheritance:
 
+zeppy.ptcp module
+-----------------
+
+.. automodule:: zeppy.ptcp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 zeppy.runIDFs module
 --------------------
 
@@ -51,7 +59,6 @@ zeppy.zeppy module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------
