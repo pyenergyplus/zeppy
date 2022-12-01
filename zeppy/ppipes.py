@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Santosh Philip
+# Copyright (c) 2020, 2022 Santosh Philip
 # =======================================================================
 #  Distributed under the MIT License.
 #  (See accompanying file LICENSE or copy at
@@ -377,9 +377,13 @@ def idf_multirun(idf_kwargs):
 
     # for some reason idf.run() does not work
     # so I am using runIDFs to run one idf at a time
+    # OK if you use idf.rinfile
+    
     idf = idf_kwargs["args"]
     options = idf_kwargs["kwargs"]
-    eppy.runner.run_functions.runIDFs([(idf, options)])
+    # eppy.runner.run_functions.runIDFfiles([(idf, options)], debug=True)
+    # idf.runfile(**options)
+    idf.run(**options)
 
 
 # def make_options(idf):
@@ -410,7 +414,8 @@ def make_options(idf):
         'output_suffix':'C',
         'output_directory':os.path.dirname(fname),
         'readvars':True,
-        'expandobjects':True
+        'expandobjects':True,
+        # 'verbose': "s",
         }
     return options
 
@@ -449,13 +454,13 @@ def runeverything():
     )
     idfs = [eppy.openidf(fname, epw=wfile) for fname in fnames]
     waitlist = [[{"args": idf, "kwargs": make_options(idf)}] for idf in idfs]
-    for w in waitlist:
-        print(w)
+    # for w in waitlist:
+    #     print(w)
     func = idf_multirun
     result = ipc_parallelpipe(func, waitlist, nworkers=None, verbose=True, sleeptime=1)
     # sleeptime=1 sec. This is a pause between sending the task out. Not sure if a single worker is grabbing all the tasks in E+. May need some testing to confirm.
-    for w in waitlist:
-        print(w)
+    # for w in waitlist:
+    #     print(w)
     print(result)
 
 
