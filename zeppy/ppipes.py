@@ -375,11 +375,9 @@ def idf_run(idf):
 def idf_multirun(idf_kwargs):
     import eppy
 
-    # for some reason idf.run() does not work
-    # so I am using runIDFs to run one idf at a time
     idf = idf_kwargs["args"]
     options = idf_kwargs["kwargs"]
-    eppy.runner.run_functions.runIDFs([(idf, options)])
+    idf.run(**options)
 
 
 def make_options(idf):
