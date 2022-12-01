@@ -1,7 +1,55 @@
-2022-11-14
+
+
+2022-11-26
 ----------
 
-- parallel pipes now wrks with TCP -> just hacked together
+- ha ! idf.runfile makes everything work fine
+
+
+2022-11-25
+----------
+
+- eppy runs the simulation on in.idf
+    - eppy does a saveas("in.idf") that is not backtracked on
+- tried the saveas(in.idf) in eppy
+    - idf.run() works
+    - some tests fail
+    - need to test runIDFs outside of the pytests
+    - ppipes.py in zeppy fails 
+
+2022-11-24
+----------
+
+Continuing from comment below (- try running runIDFs)
+
+- eppy creates folder - multi_runs/idf_0
+- these are deleted at the end of the run
+- the deletion makes it difficult to debug
+- remove the delete and see what is going on
+
+python3 -m venv ~/venvs/temp_zeppy
+source ~/venvs/temp_zeppy/bin/activate
+
+pip install -r requirements.txt
+pip install -r requirements_dev.txt
+pip uninstall eppy
+pip install -e ../eppy
+
+2022-11-15
+----------
+
+- with the E+ runs, the results have unexpected extension - *.idf.err ??
+- this has been fixed
+
+- new error. Failing because it cannot find the in.idf file
+- Is it making the in.idf files in the same place ??
+- try running runIDFs
+
+2022-11-15
+----------
+
+- check if tutorial 2 (E+) works on new computer - python3.10
+- yes !! it runs fine.
 
 2021-01-21
 ----------
