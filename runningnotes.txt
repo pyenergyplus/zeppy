@@ -1,4 +1,12 @@
+2022-12-02
+----------
 
+- bumpversion is old.
+- it screwed up the bump.
+- fix this
+- take steps to fix the version in requirements file
+- do another bump
+- release
 
 2022-11-26
 ----------
