@@ -274,7 +274,9 @@ def _fan_out_in(
     p.start()
     _v_print("started ventilator", verbose=verbose)
 
+
 # ---
+
 
 def _sinkipc(size=8):
     return f"ipc:///tmp/zeppysink_{randstr(size)}"
@@ -291,7 +293,9 @@ def _resultipc(size=8):
 def _ventipc(size=8):
     return f"ipc:///tmp/zeppyvent_{randstr(size)}"
 
+
 # ---
+
 
 def _sinktcp():
     # return f"tcp://*:5558"
@@ -309,7 +313,9 @@ def _resulttcp():
 def _venttcp():
     return f"tcp://localhost:5558"
 
+
 # ---
+
 
 def ipc_parallelpipe(func, args_list, nworkers=None, verbose=False, sleeptime=0.1):
     """distributed run of the func using zmq
@@ -339,10 +345,11 @@ def ipc_parallelpipe(func, args_list, nworkers=None, verbose=False, sleeptime=0.
 
     return message
 
+
 def tcp_parallelpipe(func, args_list, nworkers=None, verbose=False, sleeptime=0.1):
     """distributed run of the func using zmq
     Returns the results of all the run
-    Uses TCP """
+    Uses TCP"""
     args_list = args_kwargs_helper(args_list)
     # generate ipcs
     # sz = 3
@@ -434,6 +441,7 @@ def idf_run(idf):
 
 def idf_multirun(idf_kwargs):
     import eppy
+
     idf = idf_kwargs["args"]
     options = idf_kwargs["kwargs"]
     idf.run(**options)
