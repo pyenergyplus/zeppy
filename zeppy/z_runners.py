@@ -20,7 +20,7 @@ def to_zeppy_runandget(idfname, wfile):
 
 
 def zeppy_runandget(idftxt, wfiletxt, getdict):
-    """writes idftxt and wfiletxt to a tempfile, runs and returns the getdict values """
+    """writes idftxt and wfiletxt to a tempfile, runs and returns the getdict values"""
     with tempfile.TemporaryDirectory() as tmpdir:
         idf_temp_file = f"{tmpdir}/a.idf"
         open(idf_temp_file, "w").write(idftxt)
