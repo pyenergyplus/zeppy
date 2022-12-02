@@ -8,6 +8,14 @@ Changes
 release r0.1.1
 ~~~~~~~~~~~~~~
 
+2022-12-02
+----------
+
+Losts of cleanup for the release
+
+release r0.1.1
+~~~~~~~~~~~~~~
+
 Date:   Fri Dec 2 07:41:59 2022 -0800
 --------------------------------------
 
