@@ -5,6 +5,14 @@ History
 Changes
 ~~~~~~~
 
+release r0.1.5
+~~~~~~~~~~~~~~
+
+2022-12-02
+----------
+
+Losts of cleanup for the release
+
 release r0.1.1
 ~~~~~~~~~~~~~~
 

@@ -1,12 +1,12 @@
 pip
-bump2version==0.5.11
-wheel==0.33.6
-watchdog==0.9.0
-flake8==3.7.8
-tox==3.14.0
-coverage==4.5.4
+bump2version
+wheel
+watchdog
+flake8
+tox
+coverage
 Sphinx
-twine==1.14.0
+twine
 
 pytest
 pytest-runner
@@ -20,4 +20,4 @@ nbsphinx
 # witheppy
 
 # pip install -e ../eppy
--e ../eppy
+# -e ../eppy

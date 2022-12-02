@@ -1,4 +1,32 @@
 
+2022-12-02
+----------
+
+If ipython is running the wrong version of python, then:
+
+Run hash -r
+From your bash shell, run::
+
+    hash -r
+
+And try running iPython again.
+
+When you've run iPython previously in a shell session, that command was cached. This command simply resets the cache. And now when you run::
+
+    ipython
+
+it will refer to the version of iPython that you installed in your virtual environment.
+
+
+2022-12-02
+----------
+
+- bumpversion is old.
+- it screwed up the bump.
+- fix this
+- take steps to fix the version in requirements file
+- do another bump
+- release
 
 2022-11-26
 ----------
