@@ -1,7 +1,7 @@
-pyzmq
+pyzmq==25.1.0
 # - 
-eppy
-witheppy
+eppy==0.5.63
+witheppy==0.1.8
 # - 
-nbsphinx
-black
+nbsphinx==0.9.2
+black==23.3.0
