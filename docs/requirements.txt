@@ -1,5 +1,5 @@
 Sphinx==6.2.1
 sphinx-rtd-theme==1.2.2
-readthedocs-sphinx-search==0.3.1
+readthedocs-sphinx-search==0.3.2
 jupyter
 nbsphinx==0.9.2
